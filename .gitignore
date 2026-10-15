@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Raw retail dataset
+*.xlsx
+*.csv
+
+# Python-generated files
+__pycache__/
+*.pyc
