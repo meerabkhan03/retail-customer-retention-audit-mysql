@@ -2,7 +2,8 @@
 -- 03_quality_audit.sql
 -- Purpose : Measure data-quality problems BEFORE deciding how to treat them.
 -- Input   : stg_sales
--- Rule    : This file only reads data. Decisions live in docs/decision_log.md.
+-- Rule    : Reads data only, except one helper table (dup_groups, section L).
+--           Decisions live in docs/decision_log.md.
 -- =====================================================================
 USE retail_audit;
 
@@ -125,3 +126,33 @@ SELECT COUNT(*) AS rows_n,
        SUM(customer_id IS NULL) AS no_customer,
        SUM(quantity < 0)        AS negative_qty
 FROM stg_sales WHERE description IS NULL;
+
+-- L. Duplicate investigation (uses the explicit lineage columns) --------
+-- L1. Helper table: every group of identical lines, with the number of copies
+--     in each worksheet. DROPs and rebuilds dup_groups (takes a few minutes;
+--     raise the Workbench read timeout first, see README).
+DROP TABLE IF EXISTS dup_groups;
+CREATE TABLE dup_groups AS
+SELECT invoice, stock_code, description, quantity, invoice_date, price, customer_id, country,
+       COUNT(*)              AS copies,
+       SUM(source_sheet = 1) AS in_s1,
+       SUM(source_sheet = 2) AS in_s2
+FROM stg_sales
+GROUP BY invoice, stock_code, description, quantity, invoice_date, price, customer_id, country
+HAVING COUNT(*) > 1;
+
+SELECT COUNT(*) AS duplicate_groups, SUM(copies - 1) AS surplus_rows
+FROM dup_groups;                                           -- 32907, 34335
+
+-- L2. Where do the duplicates come from?
+--     Validated result: both sheets 22202 groups / 22844 surplus rows (all in
+--     1-9 Dec 2010); inside sheet 1: 6122 / 6544; inside sheet 2: 4583 / 4947.
+SELECT CASE WHEN in_s1 > 0 AND in_s2 > 0 THEN 'copies in BOTH sheets'
+            WHEN in_s1 > 0 THEN 'repeated inside sheet 1'
+            ELSE 'repeated inside sheet 2' END AS pattern,
+       COUNT(*)        AS groups_n,
+       SUM(copies - 1) AS surplus_rows,
+       SUM(CASE WHEN invoice_date >= '2010-12-01' AND invoice_date < '2010-12-10'
+                THEN copies - 1 ELSE 0 END) AS surplus_1_9_dec_2010
+FROM dup_groups
+GROUP BY pattern;

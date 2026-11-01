@@ -4,10 +4,13 @@ Usage:
     python scripts/convert_to_csv.py --input online_retail_II.xlsx --output online_retail_II.csv
 
 Notes:
-- Every column is read as text so identifiers (e.g. Customer ID) are not altered.
+- Every source column is read as text so identifiers (e.g. Customer ID) are not altered.
 - Completely empty rows are dropped.
-- Sheets are concatenated in workbook order, so the rows of sheet 1 come first.
-  The SQL scripts rely on this order to recover which sheet a row came from.
+- Two lineage columns are added so every row can be traced back to the workbook:
+    source_sheet : 1 or 2, the position of the sheet in the workbook
+    source_row   : the row's position within its sheet (first data row = 1)
+  Lineage is stored IN the data. Do not infer it from load order in the database.
+- Per-sheet date ranges are printed so they can be checked against the Excel file.
 """
 import argparse
 from pathlib import Path
@@ -24,13 +27,18 @@ def main() -> None:
     sheets = pd.read_excel(args.input, sheet_name=None, dtype=str)
 
     frames = []
-    for name, df in sheets.items():
-        df = df.dropna(how="all")
-        print(f"Sheet '{name}': {len(df)} data rows")
+    for position, (name, df) in enumerate(sheets.items(), start=1):
+        df = df.dropna(how="all").copy()
+        df["source_sheet"] = position
+        df["source_row"] = df.index + 1
+        dates = df["InvoiceDate"]
+        print(f"Sheet {position} '{name}': {len(df)} data rows, "
+              f"dates {dates.min()} to {dates.max()}")
         frames.append(df)
 
     combined = pd.concat(frames, ignore_index=True)
     print(f"Total data rows: {len(combined)}")
+    print("Columns:", list(combined.columns))
 
     combined.to_csv(args.output, index=False, lineterminator="\n", encoding="utf-8")
     print(f"Saved: {args.output}")

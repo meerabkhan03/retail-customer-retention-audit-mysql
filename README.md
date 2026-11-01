@@ -1,64 +1,100 @@
 # Customer Retention & Data-Quality Audit of a UK Online Retailer (MySQL)
 
-> **Status:** In progress. The data-quality audit is under way; retention and RFM analysis follow.
+> **Status:** data loading, quality audit, duplicate investigation, cleaning and reconciliation are complete and
+> validated. Customer analytics (cohort retention, RFM segmentation, revenue concentration) is in progress; its
+> results are added here when finished.
 
-An end-to-end SQL analysis of about 1.07 million real retail transactions. The project first audits the data and documents every cleaning decision, then measures customer retention and segments customers by recency, frequency and monetary value (RFM).
+An end-to-end SQL analysis of 1,067,371 real retail transaction lines. The project first proves what is in the
+data and documents every cleaning decision, so that the customer analysis that follows rests on a defined,
+reconciled population.
 
 ## Business questions
 
 1. How well does each monthly customer cohort keep buying over time?
-2. How concentrated is revenue among the top customers?
-3. Which customer segments are at risk, and how much revenue do they represent?
+2. Which customers and segments (recency, frequency, monetary value) matter most, and which are at risk?
+3. How concentrated is revenue among the highest-value customers?
 
 ## Dataset
 
-**Online Retail II**, UCI Machine Learning Repository (Daqing Chen), licensed CC BY 4.0.
-Transactions of a UK-based online gift-ware retailer, 01/12/2009 to 09/12/2011. Many customers are wholesalers.
-Download instructions: [data/README.md](data/README.md).
+**Online Retail II**, UCI Machine Learning Repository (Daqing Chen), CC BY 4.0. Transactions of a UK-based online
+retailer from 2009-12-01 to 2011-12-09; many customers are wholesalers. Acquisition and conversion steps are in
+[`data/README.md`](data/README.md). The data is not stored in this repository.
 
-## Approach
+## Key validated results so far
 
-| Step | Script | What happens |
+| Finding | Result |
+|---|---|
+| Rows loaded (two worksheets) | 1,067,371 (525,461 + 541,910); worksheet lineage checked against the original Excel file |
+| Worksheet overlap | 1,088 invoices appear in both sheets, all exact copies (1-9 Dec 2010); 22,523 rows removed |
+| Exact duplicates | 32,907 groups, 34,335 surplus rows (3.22%); 22,844 are the overlap |
+| Missing Customer ID | 243,007 rows (22.77%) |
+| Cancellations | 19,494 rows (1.83%) |
+| Valid merchandise sales kept | 1,015,148 rows (95.11%), £19,702,710.61 |
+| Identified customers among kept sales | 5,852 customers, covering 86.92% of kept amount |
+
+Every raw row is accounted for: 1,067,371 raw rows = 22,523 export copies + 5,712 non-merchandise rows + 17,975
+cancellations + 6,013 zero-price rows + 1,015,148 kept rows. The full reconciliation, the cleaning rules and their
+evidence are in [`docs/decision_log.md`](docs/decision_log.md); the data-quality findings are in
+[`docs/findings.md`](docs/findings.md).
+
+## How the data is protected from silent errors
+
+* **Lineage is stored, not inferred.** The conversion script writes `source_sheet` and `source_row` into the CSV.
+* **Raw data is never edited.** It is loaded as text, then typed into a staging table, then classified.
+* **One reason per row.** Every row is either kept or excluded for exactly one documented reason.
+* **Reconciliation is built in.** `sql/05_reconciliation.sql` checks that rows and amounts add up at every stage.
+
+## Workflow and scripts
+
+Run the scripts in order. Each header states what it creates and what it replaces.
+
+| Script | Purpose | Creates |
 |---|---|---|
-| 1 | `sql/01_setup_and_load.sql` | Load the CSV unchanged into a raw, all-text table; add a row ID |
-| 2 | `sql/02_staging.sql` | Validate formats, build a typed staging table with flags (nothing deleted) |
-| 3 | `sql/03_quality_audit.sql` | Measure data-quality problems |
-| 4 | *planned* | Apply documented cleaning rules; prove raw rows = kept rows + excluded rows |
-| 5 | *planned* | Cohort retention analysis |
-| 6 | *planned* | RFM segmentation and revenue concentration |
+| `scripts/convert_to_csv.py` | Convert the workbook to one CSV with lineage columns | CSV (outside the repository) |
+| `sql/01_setup_and_load.sql` | Load the CSV unchanged into a text table | `raw_online_retail` |
+| `sql/02_staging.sql` | Validate formats and build a typed table | `stg_sales` |
+| `sql/03_quality_audit.sql` | Measure data-quality problems; investigate duplicates and the overlap | `dup_groups` (helper) |
+| `sql/04_clean_views.sql` | Apply the cleaning rules, one classification per row | `overlap_invoices`, `sales_classified`, views `sales_clean`, `sales_customers`, `returns_clean` |
+| `sql/05_reconciliation.sql` | Prove nothing was lost or double-counted | (read-only checks) |
 
-## Early findings (audit in progress)
+Customer analytics scripts (cohort retention, RFM) follow once that phase is complete.
 
-- 1,067,371 rows loaded (525,461 + 541,910 across the two workbook sheets); the count reconciles with the source.
-- 22.77% of rows (243,007) have no Customer ID.
-- 34,335 surplus exact-duplicate rows; about two-thirds fall on 1-9 December 2010, which is consistent with the two sheets overlapping. Verification is under way.
-- Line items reconcile across categories (identified sales, sales without customer ID, cancellations); see [docs/decision_log.md](docs/decision_log.md).
+## How to reproduce
 
-Full results and recommendations will be added when the analysis is complete.
+1. **Prerequisites:** MySQL 8.0 or later (CTEs and window functions), MySQL Workbench, Python 3 with `pandas` and `openpyxl`.
+2. **Get and convert the data** following [`data/README.md`](data/README.md).
+3. **Workbench settings:** in the connection's *Advanced* tab, add `OPT_LOCAL_INFILE=1` under *Others*; under
+   *Edit > Preferences > SQL Editor*, raise *DBMS connection read timeout* to 600 seconds (the duplicate and
+   reconciliation queries scan over a million rows).
+4. **Run** scripts 01 to 05 in order (*File > Open SQL Script*, then the lightning-bolt button). Edit the CSV path
+   in `01_setup_and_load.sql` first.
+5. **Check** the "Expected" values written in the comments of each script and in `05_reconciliation.sql`.
+
+Developed on MySQL 8.0.45 for Windows with MySQL Workbench.
 
 ## Repository structure
 
 ```
-sql/      numbered SQL scripts, run in order
-scripts/  CSV conversion script (Python)
-docs/     decision log and findings
-images/   charts and screenshots
-data/     data source notes (the data itself is not stored here)
+README.md
+LICENSE
+data/README.md          source, licence, how to obtain and convert the data
+scripts/convert_to_csv.py
+sql/                    numbered SQL scripts (run in order)
+docs/decision_log.md    cleaning rules, evidence, reconciliation
+docs/findings.md        data-quality findings
+images/                 charts (added with the customer analysis)
 ```
 
-## How to reproduce
+## Limitations
 
-1. Download the dataset and convert it (see `data/README.md`).
-2. Run the SQL scripts in `sql/` in numerical order on MySQL 8.0 or later.
-
-Requires MySQL 8.0+ (CTEs and window functions), Python 3 with pandas and openpyxl for the conversion step.
-
-## Limitations (preliminary)
-
-- One retailer, two years; many wholesale buyers, so behaviour may differ from typical consumer retail.
-- Customers without an ID cannot be included in retention or RFM analysis.
-- Revenue figures are in GBP and not adjusted for inflation.
+* One retailer over two years; many wholesale customers, so behaviour may differ from typical consumer retail.
+* 22.36% of kept lines have no Customer ID and cannot be followed over time.
+* Returns cannot be matched to the original purchase.
+* The first month (December 2009) may include customers who were already active; the last month (December 2011) is partial.
+* Amounts are in GBP and not adjusted for inflation.
 
 ## Attribution
 
-Chen, D. *Online Retail II* [Dataset]. UCI Machine Learning Repository. https://archive.ics.uci.edu/dataset/502/online+retail+ii. CC BY 4.0.
+Chen, D. *Online Retail II* [Dataset]. UCI Machine Learning Repository.
+https://archive.ics.uci.edu/dataset/502/online+retail+ii. Licensed under CC BY 4.0.
+This repository is released under the MIT licence (see `LICENSE`).
