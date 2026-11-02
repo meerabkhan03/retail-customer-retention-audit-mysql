@@ -1,0 +1,10 @@
+cohort_group,within_months,eligible_customers,returned_customers,returned_pct
+a: opening cohort (Dec 2009),3,951,599,63.0
+a: opening cohort (Dec 2009),6,951,737,77.5
+a: opening cohort (Dec 2009),12,951,841,88.4
+b: new cohorts Jan-Jun 2010,3,2000,899,45.0
+b: new cohorts Jan-Jun 2010,6,2000,1287,64.4
+b: new cohorts Jan-Jun 2010,12,2000,1526,76.3
+c: new cohorts Jul 2010 onward,3,2273,897,39.5
+c: new cohorts Jul 2010 onward,6,1957,944,48.2
+c: new cohorts Jul 2010 onward,12,1288,775,60.2

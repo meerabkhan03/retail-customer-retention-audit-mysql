@@ -1,0 +1,8 @@
+segment,customers,gross_monetary,returns_amount,net_monetary,avg_invoices,avg_net_monetary,avg_recency_days,top_decile_customers
+"1 Loyal active (within 90 days, 5+ invoices)",1611,12580596.41,-316834.18,12263762.23,15.3,7613,27,512
+"2 Developing (within 90 days, 2-4 invoices)",907,1087342.49,-195833.23,891509.26,2.9,983,36,4
+"3 Recent first-time (within 90 days, 1 invoice)",367,139902.44,-3948.8,135953.64,1.0,370,45,0
+"4 At risk (91-365 days, 5+ invoices)",405,1251052.76,-27644.86,1223407.9,8.5,3021,182,48
+"5 Cooling (91-365 days, 1-4 invoices)",971,833472.49,-114721.11,718751.38,2.1,740,216,5
+"6 Lost regular (365+ days, 5+ invoices)",125,457643.82,-25295.26,432348.56,9.2,3459,444,12
+"7 Lost occasional (365+ days, 1-4 invoices)",1466,774930.57,-27362.68,747567.89,1.6,510,506,5

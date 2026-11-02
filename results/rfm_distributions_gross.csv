@@ -1,0 +1,11 @@
+measure,band,customers,gross_monetary
+recency,0-30 days,1627,10822036.33
+recency,31-90 days,1258,2985805.01
+recency,91-180 days,586,1011406.49
+recency,181-365 days,790,1073118.76
+recency,over 365 days,1591,1232574.39
+frequency,1 invoice,1618,558522.76
+frequency,2 invoices,945,810552.8
+frequency,3-4 invoices,1148,1466572.43
+frequency,5-9 invoices,1180,2885596.91
+frequency,10+ invoices,961,11403696.08

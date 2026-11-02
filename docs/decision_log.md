@@ -86,3 +86,45 @@ These counts are lower than in the raw audit for some codes (for example `AMAZON
   December 2009 may contain customers who were already active earlier, and December 2011 is a partial month.
 * An early check suggested that six overlapping invoices differed between the sheets. That came from the
   unreliable lineage method (section 1); with correct lineage all 1,088 are identical.
+
+---
+
+# Customer analysis decisions
+
+## 7. Definitions
+
+| Item | Decision | Why |
+|---|---|---|
+| Population | Customers with at least one valid merchandise invoice (`sales_customers`): 5,852 | Customers without an ID cannot be followed; customers with only returns have no purchase to analyse |
+| Unit of analysis | The invoice (`customer_invoices`: 36,594 invoices) | Retention and frequency count shopping trips, not lines; repeated lines cannot distort them |
+| Invoice date | Earliest line timestamp | 64 of these invoices have more than one timestamp (at most 2 minutes apart) and none crosses a month boundary |
+| Cohort | Month of the first valid invoice | Standard definition; observed window December 2009 to November 2011 |
+| Retention at month k | Share of the cohort with at least one invoice in month cohort+k | Customers order irregularly, so "bought every month" would be misleading |
+| "Returned within N months" | At least one invoice in months 1 to N; only cohorts with N fully observable months | Fair comparison across cohorts of different age |
+| December 2011 | Activity ignored; 28 customers whose first purchase was in December 2011 have no cohort | The month has only 9 days of data |
+| December 2009 | Labelled the opening cohort | Includes customers already active before the data starts |
+| RFM reference date | 2011-12-10 | The day after the last data point |
+| Frequency | Count of valid merchandise invoices | |
+| Monetary | **Net** value: gross sales plus the customer's returns | See section 8 |
+| Segments | Rule-based on recency (90 and 365 days) and frequency (5 invoices), not quintile scores | Many customers share the same frequency, so tied quintile scores would be arbitrary |
+
+## 8. Change of definition: net instead of gross monetary
+
+Monetary was first defined as gross sales, with returns stored separately. The ten largest returners showed that customers
+16446 and 12346 had placed orders worth £168,472.50 and £77,352.96 that were almost entirely cancelled (returns of
+-£168,469.60 and -£77,183.60). Gross monetary counted them as top customers although their net value was £2.90 and £169.36,
+and they made returns look abnormally high in the Developing and Cooling segments.
+
+**Decision:** value measures (segment value, spend deciles) use net monetary. Gross is reported next to it.
+**Effect:** segment sizes are unchanged (recency and frequency are unaffected); total value falls from £17,124,940.98 to £16,413,300.86;
+the concentration conclusion barely moves (top 10%: 63.8% gross, 63.2% net).
+**Limitation:** returns cannot be matched to the purchase they reverse, so 20 customers have a net value of zero or below;
+they remain in the population.
+
+## 9. Validation of the customer layer
+
+Each table was reconciled to the layer before it: `customer_invoices` equals `sales_customers` (788,189 lines, £17,124,940.98,
+5,852 customers); the retention grid counts every customer-month exactly once (24,889 cells for 24,889 customer-months);
+cohort sizes add up to 5,824 plus 28 excluded customers; segments contain every customer exactly once and add up to the
+net total (£16,413,300.86); segment returns add up to -711,640.12.
+
