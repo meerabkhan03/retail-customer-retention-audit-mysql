@@ -1,0 +1,6 @@
+category,line_items,amount
+1 Export duplicate (sheet 2 copy),22523,377488.45
+2 Non-merchandise code,5712,-73186.01
+3 Cancellation (return),17975,-719762.50
+4 Zero or negative price,6013,0.00
+KEPT: valid merchandise sales,1015148,19702710.61

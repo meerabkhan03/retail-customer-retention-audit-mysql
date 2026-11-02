@@ -7,6 +7,7 @@ the SQL comments.
 
 | File | Produced by |
 |---|---|
+| `cleaning_reconciliation.csv` | `sql/05_reconciliation.sql`, R2 |
 | `cohort_retention_selected_months.csv` | `sql/07_cohort_retention.sql`, K3 |
 | `retention_average_new_cohorts.csv` | `sql/07_cohort_retention.sql`, K4 |
 | `returned_within_months.csv` | `sql/07_cohort_retention.sql`, K5 |
