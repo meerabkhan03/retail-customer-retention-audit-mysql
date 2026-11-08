@@ -9,9 +9,11 @@ An end-to-end SQL analysis of 1,067,371 real retail transaction lines: first pro
 | Data | 1,067,371 raw rows become 1,015,148 valid merchandise lines; every row is accounted for |
 | Hidden problem | Two worksheets contain the same nine days twice (1,088 invoices; 22,523 rows removed) |
 | Retention | 39.5% of genuinely new customers buy again within 3 months, 60.2% within 12 |
-| Customers | 27.5% of identified customers (Loyal active) produce 74.7% of net customer value |
-| Concentration | The top 10% of identified customers account for 63.8% of their gross sales |
+| Customers | 27.5% of identified customers (Loyal active) produce 74.7% of net customer value (sales after returns) |
+| Concentration | The top 10% of identified customers account for 63.8% of their gross sales (before returns) |
 | Validation | 19 of 19 checks pass on a complete rebuild from the raw CSV |
+
+**Terms.** *Gross sales* are valid merchandise sales before returns. *Net* means after the customer's returns (returns are stored as negative amounts). *Total line amount* is quantity times price added up over a set of rows; when it covers every raw row it also contains returns, fees and duplicate copies, so it is not sales revenue.
 
 ## 1. Business question
 
@@ -87,10 +89,7 @@ CSV (with lineage columns source_sheet, source_row)
 
 Everything below uses value net of returns unless stated.
 
-* **A few customers carry the business.** Among identified customers, the top 1% (59) account for 32.0% of gross sales, the top 10% for 63.8% and the top 20% for 77.1% (63.2% and 76.7% after returns).
-
-![Sales concentration](images/05_sales_concentration.png)
-
+* **A few customers carry the business.** Among identified customers, the top 1% (59) account for 32.0% of gross sales, the top 10% for 63.8% and the top 20% for 77.1% (63.2% and 76.7% after returns; [concentration chart](images/05_sales_concentration.png)).
 * **Loyal active customers** (bought within 90 days, 5+ invoices) are 27.5% of identified customers but 74.7% of net customer value, and include 512 of the 586 highest-value customers.
 * **Retention is irregular.** About 21% of new customers buy in each of the first three months after their first purchase (18% at month 6, 15% at month 9), but among genuinely new customers (July 2010 onward) 39.5% return within 3 months, 48.2% within 6 and 60.2% within 12.
 * **Customers at risk:** 405 regular customers have been silent for 91 to 365 days (£1.22M of historical net value), and 70 of the 586 top spenders have not bought for 90 days.
@@ -100,6 +99,8 @@ Segments, retention tables, cautions and untested hypotheses for action: [`docs/
 ## 5. Validation checks
 
 The project's numbers can be re-derived and cross-checked in two ways. They answer different questions.
+
+Terms are defined at the top of this README.
 
 **Layer 1: does the build reproduce the analysis?** `sql/09_validation_summary.sql` runs 19 checks in one query. Each compares a number in the rebuilt database with the value recorded in this analysis. **All 19 pass on a complete rebuild from the raw CSV.** This shows the scripts reproduce the results; it does not by itself show the results are right.
 
@@ -115,25 +116,28 @@ The project's numbers can be re-derived and cross-checked in two ways. They answ
 | 8 | Excluded: cancellations | Rule 3 separates the expected number of return rows | 17,975 |
 | 9 | Excluded: zero or negative price | Rule 4 removes the expected number of rows | 6,013 |
 | 10 | Kept: valid merchandise sales | With checks 6 to 9 every raw row is accounted for: 22,523 + 5,712 + 17,975 + 6,013 + 1,015,148 = 1,067,371 | 1,015,148 |
-| 11 | Gross line total (GBP) | The sum of quantity times price over all raw rows. It includes returns and fees (negative) and the duplicate copies (positive) | 19,287,250.55 |
-| 12 | Kept amount (GBP) | The same sum over kept rows only. See the bridge below | 19,702,710.61 |
+| 11 | Total line amount, all raw rows (GBP) | Quantity times price summed over every raw row. It includes returns, fees and duplicate copies, so it is not sales revenue | 19,287,250.55 |
+| 12 | Kept amount: valid merchandise sales (GBP) | The same sum over kept rows only (see the bridge below) | 19,702,710.61 |
 | 13 | Identified customers | The customer population is the one analysed | 5,852 |
 | 14 | Invoices of identified customers | The invoice table has the expected number of invoices (its lines and amount are tied to the kept sales in `06_customer_base.sql`) | 36,594 |
 | 15 | Customers assigned to a cohort | Only the 28 customers who first bought in the partial last month are left out | 5,824 |
 | 16 | Monthly cohorts | The retention grid covers December 2009 to November 2011 | 24 |
 | 17 | Customers in segments | Every customer is in exactly one segment | 5,852 |
-| 18 | Net customer value (GBP) | Gross customer value minus returns (17,124,940.98 minus 711,640.12) | 16,413,300.86 |
-| 19 | Top 10% share of gross sales (%) | The headline concentration figure reproduces | 63.8 |
+| 18 | Net customer value (GBP) | Gross sales of identified customers minus their returns: 17,124,940.98 minus 711,640.12 | 16,413,300.86 |
+| 19 | Top 10% of identified customers: share of their gross sales (%) | The headline concentration figure reproduces | 63.8 |
 
-**Why check 12 is larger than check 11.** The kept amount is the largest figure because the gross line total also contains negative amounts (returns and fees) and the positive amount of the duplicate copies. The bridge, in GBP:
+**Why check 12 is larger than check 11.** The total line amount over all raw rows also contains negative amounts (returns and fees) that outweigh the positive amount of the duplicate copies. The bridge, in GBP:
 
-| | Amount |
+| Group of rows | Amount |
 |---|---:|
-| Kept amount (check 12) | 19,702,710.61 |
-| Less returns (cancellations) | -719,762.50 |
-| Less non-merchandise (net: postage in, fees and adjustments out) | -73,186.01 |
-| Plus export duplicate copies | +377,488.45 |
-| **Gross line total (check 11)** | **19,287,250.55** |
+| Kept: valid merchandise sales (check 12) | 19,702,710.61 |
+| Returns (negative amounts) | -719,762.50 |
+| Non-merchandise (net negative) | -73,186.01 |
+| Export duplicate copies (positive amounts) | +377,488.45 |
+| Zero or negative price rows (rule 4) | 0.00 |
+| **Total line amount, all raw rows (check 11)** | **19,287,250.55** |
+
+Add the rows to get the total: the signs show how each group of rows sits inside the total line amount, so nothing is subtracted twice. Rule 4 rows add £0.00, so they change the row count but not the amount. Non-merchandise is negative overall: postage and carriage charged to customers (+£433,410.51) are outweighed by Amazon fees, bad-debt, manual and bank entries, discounts and similar items (-£514,366.31); a few small entries add +£7,769.79 (per-code amounts in [`docs/decision_log.md`](docs/decision_log.md)).
 
 **Layer 2: independent evidence behind the decisions** (`sql/05_reconciliation.sql`, `sql/03_quality_audit.sql`):
 
