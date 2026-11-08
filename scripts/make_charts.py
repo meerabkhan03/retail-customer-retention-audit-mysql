@@ -145,3 +145,28 @@ ax.set_title("A small group of customers drives most of the sales")
 fig.text(0.01, -0.04, "Gross sales of 5,852 identified customers (before returns). After returns the top 10% hold 63.2%.\n" + SOURCE,
          fontsize=8, color="#555")
 save(fig, "05_sales_concentration.png")
+
+# 6. The two "top customers" whose orders were almost fully cancelled -------------------
+tr = pd.read_csv(RES / "top_returners.csv").head(2)          # the two largest returners
+gross = tr["gross_monetary"].to_numpy(dtype=float)
+net = gross + tr["returns_amount"].to_numpy(dtype=float)
+threshold = float(pd.read_csv(RES / "spend_deciles_gross.csv").sort_values("decile")["min_gross_monetary"].iloc[0])
+labels = [f"Customer {int(c)}" for c in tr["customer_id"]]
+fig, ax = plt.subplots(figsize=(7.5, 5))
+x = np.arange(len(labels))
+w = 0.34
+b1 = ax.bar(x - w / 2, gross, w, color=GREY, label="Gross spend (before returns)")
+b2 = ax.bar(x + w / 2, net, w, color=BLUE, label="Net spend (after returns)")
+for bars in (b1, b2):
+    for b in bars:
+        y = max(b.get_height(), threshold) + 3500            # keep labels clear of the dashed line
+        ax.text(b.get_x() + b.get_width() / 2, y, f"£{b.get_height():,.2f}", ha="center", fontsize=9)
+ax.axhline(threshold, color=ORANGE, ls="--", lw=1.2, label=f"Top 10% of customers start at £{threshold:,.2f} gross spend")
+ax.set_xticks(x, labels)
+ax.set_ylim(0, gross.max() * 1.15)
+ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"£{int(v):,}"))
+ax.legend(frameon=False, loc="upper right")
+ax.set_title("Two apparent top customers were almost fully cancelled orders")
+fig.text(0.01, -0.05, "Together these two customers account for 34.5% of the returns of identified customers.\n" + SOURCE,
+         fontsize=8, color="#555")
+save(fig, "06_two_top_customers_gross_vs_net.png")

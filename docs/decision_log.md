@@ -71,8 +71,8 @@ These counts are lower than in the raw audit for some codes (for example `AMAZON
 
 | Issue | Rows | Decision | Why |
 |---|---:|---|---|
-| Missing Customer ID | 243,007 (22.77% of raw) | **Keep** in merchandise sales totals; **exclude from customer-level analysis** | A missing ID does not make a sale invalid, but the buyer cannot be followed over time. 226,959 kept lines (£2,577,769.63, 13.08% of kept amount) have no ID |
-| Repeated identical lines inside one invoice | 11,731 surplus lines, £57,092.82 (0.29% of kept amount) | **Keep** | Cannot be shown to be errors (a customer can scan an item twice). They cannot change cohort membership or retention, frequency counts distinct invoices, and the effect on monetary value is at most 0.29% |
+| Missing Customer ID | 243,007 (22.77% of raw) | **Keep** in merchandise sales totals; **exclude from customer-level analysis** | A missing ID does not make a sale invalid, but the buyer cannot be followed over time. 226,959 kept lines (£2,577,769.63, 13.08% of kept sales value) have no ID |
+| Repeated identical lines inside one invoice | 11,731 surplus lines, £57,092.82 (0.29% of kept sales value) | **Keep** | Cannot be shown to be errors (a customer can scan an item twice). They cannot change cohort membership or retention, frequency counts distinct invoices, and the effect on monetary value is at most 0.29% |
 | Missing description | 4,382 | No separate rule | All of them are zero-price rows (rule 4) or were removed by rules 1 and 2 |
 | Invoices with more than one timestamp | 82 of 39,516 kept invoices | Resolved at invoice level in the customer analysis | Each invoice has one customer and one country; only the timestamp can differ between lines |
 | Gift vouchers (`GIFT_0001_*`), shop items (`DCGS*`) | 7 voucher codes, £1,756.17 | **Keep** | Customers buy them; the amount is immaterial either way |

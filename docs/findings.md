@@ -16,7 +16,7 @@ would be counted twice.
 There are 32,907 groups of identical lines, with 34,335 surplus rows (3.22% of raw). 22,844 of those surplus
 rows sit in the overlap window (identical copies in both sheets); 11,491 are repeats inside a single worksheet.
 Removing the sheet-2 overlap copy (22,523 rows) leaves 11,812 surplus lines. 11,731 of them are in the kept data
-(£57,092.82, 0.29% of kept amount) and the other 81 belong to rows excluded by other rules. The remaining
+(£57,092.82, 0.29% of kept sales value) and the other 81 belong to rows excluded by other rules. The remaining
 repeats are kept because repeated scans of the same item are plausible.
 
 ## 3. Roughly one row in four has no customer
@@ -54,7 +54,7 @@ merchandise sales are **£19,702,710.61**.
 
 The customer analysis covers the **5,852 customers** with at least one valid merchandise invoice (36,594 invoices,
 £17,124,940.98 of sales before returns, £16,413,300.86 after returns). Rows without a Customer ID cannot be followed
-over time and are outside this analysis (13.1% of kept amount). Every measure counts invoices, not lines.
+over time and are outside this analysis (13.1% of kept sales value, 22.4% of kept lines). Every measure counts invoices, not lines.
 
 ## 9. Retention: customers come back, but irregularly
 
@@ -101,7 +101,7 @@ Segments use thresholds rather than quintile scores: 90 days, 365 days (one seas
 
 ## 11. Concentration
 
-| Top share of customers | Customers | Share of gross sales |
+| Top share of customers | Customers | Share of gross sales to identified customers |
 |---|---:|---:|
 | 1% | 59 | 32.0% |
 | 5% | 293 | 51.9% |
@@ -116,7 +116,7 @@ returns are treated. The bottom half of customers account for 6.5% of gross sale
 ## 12. Returns: two almost-fully-cancelled orders
 
 Returns are concentrated: customers 16446 (-£168,469.60) and 12346 (-£77,183.60) account for
-34.5% of all customer returns, and the ten largest returners for 51.3%. Both customers' large orders
+34.5% of the returns of identified customers, and the ten largest returners for 51.3%. Both customers' large orders
 (gross £168,472.50 and £77,352.96) were almost entirely cancelled, so their net values are £2.90 and £169.36.
 They sat in the Developing and Cooling segments and made returns look unusually large there (18.0% and 13.8% of sales);
 without these two customers the ratios are 3.0% and 5.0%, in line with the other segments. For this reason value
@@ -132,7 +132,7 @@ These follow from the numbers but have not been tested; the data contains no inf
 3. **Move Developing customers towards regular status** with reminders timed before the autumn peak.
 4. **Aim a second-purchase prompt at new customers within their first 90 days:** most return, if at all, within three months, and about 60% do not.
 5. **Use low-cost automation for Cooling and Lost occasional customers;** they are many but low in value.
-6. **Capture the Customer ID on every order** (13.1% of kept sales are untracked) **and link returns to the original invoice.**
+6. **Capture the Customer ID on every order** (13.1% of kept sales value, or 22.4% of kept lines, has no customer ID) **and link returns to the original invoice.**
 
 ## 14. What these results cannot say
 
